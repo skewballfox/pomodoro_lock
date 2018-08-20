@@ -1,9 +1,11 @@
 #!/bin/bash
 set -o nounset                # good practice, exit if unset variable used
 counter=0
-pomodoro_complete_flag=/home/daedalus/github/pomodoro_complete_flag
+pomodoro_complete_flag=/tmp/pomodoro_complete_flag
 pidfile=/tmp/lastaukth.pid     # lock file path
 logfile=/tmp/lastauth.log     # log file path
+
+SECONDS=0
 
 cleanup()
 {                   # when cleaning up:
@@ -18,16 +20,21 @@ log()
 }
 lock_task()#things to be done when session is locked
 {
-    touch /home/daedalus/github/pomodoro_lock/flag_file
+    duration=$SECONDS
     if [ -e "$pomodoro_complete_flag" ]; then    # if lock file exists, exit
         counter=$((counter+1))
         rm -f $pomodoro_complete_flag
+    else
+        touch /tmp/pom_lock_flag
+        counter=$((0))
     fi
 }
 unlock_task()
 {
-  if [  "$counter" == 4  ]; then    # if lock file exists, exit
-      touch /home/daedalus/github/pomodoro_lock/long_flag
+  if [ "$(($duration/60))" -gt "15" ]; then
+      counter=$((0))
+  elif [ "$counter" == 4 ]; then
+      touch /tmp/extended_break_flag
       counter=$((0))
   fi
   /home/daedalus/github/pomodoro_lock/pomodoro_lock.py

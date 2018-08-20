@@ -26,34 +26,43 @@ program. This will hopefully prevent the program from crashing after extended
 periods of Time.
 
 August 2018
+19th
 I added a set of flags for setting an extended break after every fourth pomodoro
+
+I changed the flag files to use the /tmp directory
+
+I changed the bash script to only create the lock flag file if the program didn't
+completes successfully.
+
+I added a running flag to prevent more than one instance running at a time.
+precedence was given to the younger script, as the program should be launched
+only if the screen is unlocked.
+
+I added a timer in the bash script to reset the extended break counter if
+it has been more than 15 minutes since the screen locked.
 
 TODO:
 priority highest to lowest
 
-1) set the program to use the /tmp directory for all flags. this gets us closer
-to the end goal of having a user agnostic process.
+1)rework code to remove some of the unnecessary subprocess calls. This will
+improve security and make it slightly more linux agnostic.
 
-2) create a kill script, or some way of stopping the pomodoro process.
+1) create a kill script, or some way of stopping the pomodoro process.
+
+2) create a service that is constantly running in the background, or just
+autostart.
 
 3) move or copy contents to user bin folder or preferably a user agnostic
 location
 
-4) create a set of flags that will reset the counter if the screen is unlocked
-within a certain time frame of the pomodoro ending. this prevents a long pomodoro
-being triggered uneccessarily after some time away from the computer.
-
-5) create a service that is constantly running in the background, or just
-autostart.
-
-6) see if it's possible to do something other than blacking out the screen,
+4) see if it's possible to do something other than blacking out the screen,
 such as running a gif or video. mostly aesthetic, but could add to the
 functionality as an actual pomodoro timer.
 
-7) create a user script log file to document all my user scripts, or which this
+5) create a user script log file to document all my user scripts, or which this
 is just one.
 
-8)create a GUI for toggling my lock and unlock scripts, of which this is one.
+6)create a GUI for toggling my lock and unlock scripts, of which this is one.
 Bonus points if I can make it modular, and upload it to the AUR.
 
 
@@ -62,7 +71,7 @@ import subprocess
 import configparser
 import time
 import os
-
+import sys
 
 config=configparser.ConfigParser()
 config.sections()
@@ -96,16 +105,25 @@ def pomodoro(extended_break=False):
 
 
 
+#commented out following code because I don't know if I should keep it
+#mainly trying to prevent interference of 2 seperate scripts
 
+if (os.path.exists("/tmp/pom_running_flag")==True):
+    subprocess.call(["kill", "-9", "$(cat /tmp/pom_running_flag)"])
 
-if (os.path.exists("./flag_file")==True):
-    subprocess.call(["rm", "./flag_file"])
-if (os.path.exists("./long_flag")==True):
+subprocess.call(["touch", "/tmp/pom_running_flag"])
+subprocess.call(["echo", "$$", ">", "/tmp/pom_running_flag"])
+
+if (os.path.exists("/tmp/extended_break_flag")==True):
     extended_break=True
-    subprocess.call(["rm", "./long_flag"])
-for i in range(2*awaketime):
-    if (os.path.exists("./flag_file")==False):
-        time.sleep(30)
+    subprocess.call(["rm", "-f", "/tmp/extended_break_flag"])
+for i in range(6*awaketime):
+    if (os.path.exists("/tmp/pom_lock_flag")==False):
+        time.sleep(10)
     else:
+        subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
+        subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
         sys.exit()
 pomodoro();
+subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
+sys.exit(0)
