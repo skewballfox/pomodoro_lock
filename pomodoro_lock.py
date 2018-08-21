@@ -41,11 +41,12 @@ only if the screen is unlocked.
 I added a timer in the bash script to reset the extended break counter if
 it has been more than 15 minutes since the screen locked.
 
+21st
+I changed a few of the lines to use in the python script to use less bash
+and more python builtins
+
 TODO:
 priority highest to lowest
-
-1)rework code to remove some of the unnecessary subprocess calls. This will
-improve security and make it slightly more linux agnostic.
 
 1) create a kill script, or some way of stopping the pomodoro process.
 
@@ -86,7 +87,7 @@ extended_break=False #used to tell when to make the pause longer than normal
 def pomodoro(extended_break=False):
     get = subprocess.check_output(["xrandr"]).decode("utf-8").split()
     screens = [get[i-1] for i in range(len(get)) if get[i] == "connected"]
-    subprocess.call(["touch","pomodoro_complete_flag"])
+    subprocess.call(["touch","/tmp/pomodoro_complete_flag"])
     for scr in screens:
         # lock the screen, turn the display black, and potentially activate
         # a very intensive process to further incentivise my commitment...
@@ -105,14 +106,20 @@ def pomodoro(extended_break=False):
 
 
 
-#commented out following code because I don't know if I should keep it
-#mainly trying to prevent interference of 2 seperate scripts
+#check to make sure this is only instance of script
+#if not, kill earlier instance
 
 if (os.path.exists("/tmp/pom_running_flag")==True):
-    subprocess.call(["kill", "-9", "$(cat /tmp/pom_running_flag)"])
+    with open("/tmp/pom_running_flag") as file:
+        pid=file.readline().rstrip()
+    subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
+    subprocess.call(["kill", "-9", pid])
 
-subprocess.call(["touch", "/tmp/pom_running_flag"])
-subprocess.call(["echo", "$$", ">", "/tmp/pom_running_flag"])
+#write pid to file, to be used in the above verification
+
+pid_file=open("/tmp/pom_running_flag","x")
+pid_file.write(("%d")%(os.getpid()))
+pid_file.close()
 
 if (os.path.exists("/tmp/extended_break_flag")==True):
     extended_break=True
@@ -124,6 +131,7 @@ for i in range(6*awaketime):
         subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
         subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
         sys.exit()
+
 pomodoro();
 subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
 sys.exit(0)

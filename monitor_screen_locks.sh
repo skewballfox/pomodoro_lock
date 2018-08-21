@@ -4,7 +4,7 @@ counter=0
 pomodoro_complete_flag=/tmp/pomodoro_complete_flag
 pidfile=/tmp/lastaukth.pid     # lock file path
 logfile=/tmp/lastauth.log     # log file path
-
+pom_kill_flag=/tmp/pom_kill_flag
 SECONDS=0
 
 cleanup()
@@ -37,7 +37,9 @@ unlock_task()
       touch /tmp/extended_break_flag
       counter=$((0))
   fi
-  /home/daedalus/github/pomodoro_lock/pomodoro_lock.py
+  if [ ! -e $pom_kill_flag]; then
+    /home/daedalus/github/pomodoro_lock/pomodoro_lock.py
+  fi
 }
 
 if [ -e "$pidfile" ]; then    # if lock file exists, exit
