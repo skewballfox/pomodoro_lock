@@ -48,20 +48,22 @@ and more python builtins
 TODO:
 priority highest to lowest
 
-1) create a kill script, or some way of stopping the pomodoro process.
-
-2) create a service that is constantly running in the background, or just
+1) create a service that is constantly running in the background, or just
 autostart.
 
-3) move or copy contents to user bin folder or preferably a user agnostic
+2) move or copy contents to user bin folder or preferably a user agnostic
 location
 
-4) see if it's possible to do something other than blacking out the screen,
+3) see if it's possible to do something other than blacking out the screen,
 such as running a gif or video. mostly aesthetic, but could add to the
-functionality as an actual pomodoro timer.
+functionality as an actual pomodoro timer. an example would be ideas for things
+to do in the time until next unlock.
 
-5) create a user script log file to document all my user scripts, or which this
-is just one.
+4) implement some type of logging
+
+5)perhaps work to seperate the monitor to it's own project, and just have this
+depend on that script. the reason being is that the monitor is going to be used
+for quite a few scripts that revolve around screen locks and unlocks.
 
 6)create a GUI for toggling my lock and unlock scripts, of which this is one.
 Bonus points if I can make it modular, and upload it to the AUR.
@@ -83,6 +85,19 @@ awaketime = int(float(config.get("pomodoro_lock","awaketime")))
 sleeptime = int(float(config.get("pomodoro_lock","sleeptime"))*60)
 
 extended_break=False #used to tell when to make the pause longer than normal
+
+def kill_running_pomodoro():
+    """
+    check to make sure this is only instance of script
+    if not, kill earlier instance.
+
+    """
+    if (os.path.exists("/tmp/pom_running_flag")==True):
+        with open("/tmp/pom_running_flag") as file:
+            pid=file.readline().rstrip()
+        subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
+        subprocess.call(["kill", "-9", pid])
+
 
 def pomodoro(extended_break=False):
     get = subprocess.check_output(["xrandr"]).decode("utf-8").split()
@@ -106,32 +121,30 @@ def pomodoro(extended_break=False):
 
 
 
-#check to make sure this is only instance of script
-#if not, kill earlier instance
+if __name__=="__main__":
 
-if (os.path.exists("/tmp/pom_running_flag")==True):
-    with open("/tmp/pom_running_flag") as file:
-        pid=file.readline().rstrip()
+    #check to make sure this is only instance of script
+    #if not, kill earlier instance
+
+    kill_running_pomodoro()
+
+    #write pid to file, to be used in the above verification
+
+    pid_file=open("/tmp/pom_running_flag","x")
+    pid_file.write(("%d")%(os.getpid()))
+    pid_file.close()
+
+    if (os.path.exists("/tmp/extended_break_flag")==True):
+        extended_break=True
+        subprocess.call(["rm", "-f", "/tmp/extended_break_flag"])
+    for i in range(6*awaketime):
+        if (os.path.exists("/tmp/pom_lock_flag")==False):
+            time.sleep(10)
+        else:
+            subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
+            subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
+            sys.exit()
+
+    pomodoro();
     subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
-    subprocess.call(["kill", "-9", pid])
-
-#write pid to file, to be used in the above verification
-
-pid_file=open("/tmp/pom_running_flag","x")
-pid_file.write(("%d")%(os.getpid()))
-pid_file.close()
-
-if (os.path.exists("/tmp/extended_break_flag")==True):
-    extended_break=True
-    subprocess.call(["rm", "-f", "/tmp/extended_break_flag"])
-for i in range(6*awaketime):
-    if (os.path.exists("/tmp/pom_lock_flag")==False):
-        time.sleep(10)
-    else:
-        subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
-        subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
-        sys.exit()
-
-pomodoro();
-subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
-sys.exit(0)
+    sys.exit(0)
