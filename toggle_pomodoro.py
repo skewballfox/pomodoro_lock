@@ -33,19 +33,40 @@ from pomodoro_lock import kill_running_pomodoro
 
 if (len(sys.argv)>1):
     if (sys.argv[1].lower()) == "on":
+
         if (os.path.exists("/tmp/pom_kill_flag")==True):
             subprocess.call(["rm", "-f", "/tmp/pom_kill_flag"])
             #I want to implement some way to indepedently lauch below
-            #subprocess.call("./pomodoro_lock")
         else:
-            print("Pomodoro lock was already running normally")
-            sys.exit(0)
+            print("kill flag didn't exist")
+
+        if (os.path.exists("/tmp/pom_running_flag")==False):
+            subprocess.Popen("./pomodoro_lock.py", creationflags=DETATCHED_PROCESS
+            | CREATE_NEW_PROCESS_GROUP, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, stdin=subprocess.PIPE, close_fds=True)
+        else:
+            print("pomodoro lock was already running")
+
+        sys.exit(0)
+
     elif (sys.argv[1].lower()) == "off":
+
         if (os.path.exists("/tmp/pom_kill_flag")==False):
             open("/tmp/pom_kill_flag", "x").close()
+        else:
+            print("kill flag already exists")
+
+        if (os.path.exists("/tmp/pom_running_flag")==True):
             kill_running_pomodoro()
         else:
-            print("Pomodoro lock was already halted")
+            ("Pomodoro lock was already halted")
+
+        sys.exit(0)
+    elif (sys.argv[1].lower() == "sleep"):
+        if (os.path.exists("/tmp/pom_kill_flag")==False):
+            open("/tmp/pom_kill_flag", "x").close()
+
+
     else:
         print(sys.argv[1].lower())
         sys.exit("CURRENTLY UNSUPPORTED ARGUMENT")

@@ -76,15 +76,6 @@ import time
 import os
 import sys
 
-config=configparser.ConfigParser()
-config.sections()
-config.read('config.ini')
-config.sections()
-
-awaketime = int(float(config.get("pomodoro_lock","awaketime")))
-sleeptime = int(float(config.get("pomodoro_lock","sleeptime"))*60)
-
-extended_break=False #used to tell when to make the pause longer than normal
 
 def kill_running_pomodoro():
     """
@@ -122,6 +113,16 @@ def pomodoro(extended_break=False):
 
 
 if __name__=="__main__":
+    config=configparser.ConfigParser()
+    config.sections()
+    config.read('config.ini')
+    config.sections()
+
+    awaketime = int(float(config.get("pomodoro_lock","awaketime")))
+    sleeptime = int(float(config.get("pomodoro_lock","sleeptime"))*60)
+
+    extended_break=False #used to tell when to make the pause longer than normal
+
 
     #check to make sure this is only instance of script
     #if not, kill earlier instance
