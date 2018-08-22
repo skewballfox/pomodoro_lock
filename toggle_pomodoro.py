@@ -40,7 +40,10 @@ def toggle_on():
     if (os.path.exists("/tmp/pom_running_flag")==False):
         subprocess.Popen("/home/daedalus/github/pomodoro_lock/pomodoro_lock.py")
     else:
-        print("pomodoro lock was already running")
+        print("pomodoro lock was already running.")
+        print("Killing and restarting")
+        kill_running_pomodoro();
+        subprocess.Popen("/home/daedalus/github/pomodoro_lock/pomodoro_lock.py")
 
 def toggle_off():
     if (os.path.exists("/tmp/pom_kill_flag")==False):
