@@ -115,7 +115,7 @@ def pomodoro(extended_break=False):
 if __name__=="__main__":
     config=configparser.ConfigParser()
     config.sections()
-    config.read('config.ini')
+    config.read('/home/daedalus/github/pomodoro_lock/config.ini')
     config.sections()
 
     awaketime = int(float(config.get("pomodoro_lock","awaketime")))

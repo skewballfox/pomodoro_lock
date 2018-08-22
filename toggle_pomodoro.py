@@ -41,9 +41,7 @@ if (len(sys.argv)>1):
             print("kill flag didn't exist")
 
         if (os.path.exists("/tmp/pom_running_flag")==False):
-            subprocess.Popen("./pomodoro_lock.py", creationflags=DETATCHED_PROCESS
-            | CREATE_NEW_PROCESS_GROUP, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, stdin=subprocess.PIPE, close_fds=True)
+            subprocess.Popen("/home/daedalus/github/pomodoro_lock/pomodoro_lock.py")
         else:
             print("pomodoro lock was already running")
 
