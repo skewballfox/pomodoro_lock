@@ -19,4 +19,4 @@ This project is licensed under the MIT License - see the [license.md](license.md
 
 * The bash script was originally copied hashbrown's answer from this to this stack overflow post: https://superuser.com/questions/662974/logging-lock-screen-events
 
-the python script was originally inspired by Jacob Vlijim's response in this thread: https://askubuntu.com/questions/696620/a-timer-that-automatically-locks-the-screen-to-take-a-break-away-from-the-comput
+* the python script was originally inspired by Jacob Vlijim's response in this thread: https://askubuntu.com/questions/696620/a-timer-that-automatically-locks-the-screen-to-take-a-break-away-from-the-comput

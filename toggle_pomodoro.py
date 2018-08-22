@@ -35,7 +35,8 @@ if (len(sys.argv)>1):
     if (sys.argv[1].lower()) == "on":
         if (os.path.exists("/tmp/pom_kill_flag")==True):
             subprocess.call(["rm", "-f", "/tmp/pom_kill_flag"])
-            #add line to launch script if not already running
+            #I want to implement some way to indepedently lauch below
+            #subprocess.call("./pomodoro_lock")
         else:
             print("Pomodoro lock was already running normally")
             sys.exit(0)
