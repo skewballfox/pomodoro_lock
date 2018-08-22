@@ -15,15 +15,13 @@ Created initial version, right now just toggles on and off
 TODO:
 priority highest to lowest
 
-1)implement some way of setting a timer, like off for a specified time.
-
-2)implement another script to set to turn off pomodor automatically at specified
+1)implement another script to set to turn off pomodor automatically at specified
 times(such as class)
 
-3)implement arg parser and try to make behavior more like a traditional command
+2)implement arg parser and try to make behavior more like a traditional command
 line tool
 
-4) implement logging
+3) implement logging
 
 """
 import sys
