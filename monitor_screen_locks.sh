@@ -5,7 +5,7 @@ pomodoro_complete_flag=/tmp/pomodoro_complete_flag
 pidfile=/tmp/lastaukth.pid     # lock file path
 logfile=/tmp/lastauth.log     # log file path
 pom_kill_flag=/tmp/pom_kill_flag
-SECONDS=0
+
 
 cleanup()
 {                   # when cleaning up:
@@ -20,7 +20,7 @@ log()
 }
 lock_task()#things to be done when session is locked
 {
-    duration=$SECONDS
+    SECONDS=0
     if [ -e "$pomodoro_complete_flag" ]; then    # if lock file exists, exit
         counter=$((counter+1))
         rm -f $pomodoro_complete_flag
@@ -31,6 +31,7 @@ lock_task()#things to be done when session is locked
 }
 unlock_task()
 {
+  duration=$SECONDS
   if [ "$(($duration/60))" -gt "15" ]; then
       echo "$(($duration/60))"
       counter=$((0))
