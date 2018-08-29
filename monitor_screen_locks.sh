@@ -1,7 +1,12 @@
 #!/bin/bash
 set -o nounset                # good practice, exit if unset variable used
-counter=0
-pomodoro_complete_flag=/tmp/pomodoro_complete_flag
+
+lock_task_folder="/home/daedalus/github/pomodoro_lock/lock_task/"
+unlock_task_folder="/home/daedalus/github/pomodoro_lock/unlock_task/"
+start_task_folder="/home/daedalus/github/pomodoro_lock/start_task/"
+
+seconds_file="/tmp/seconds_file"
+
 pidfile=/tmp/lastaukth.pid     # lock file path
 logfile=/tmp/lastauth.log     # log file path
 pom_kill_flag=/tmp/pom_kill_flag
@@ -18,30 +23,19 @@ log()
 {                       # simple logging format example
     echo $(date +%Y-%m-%d\ %X) -- $USER -- "$@" >> $logfile
 }
+
 lock_task()#things to be done when session is locked
 {
-    SECONDS=0
-    if [ -e "$pomodoro_complete_flag" ]; then    # if lock file exists, exit
-        counter=$((counter+1))
-        rm -f $pomodoro_complete_flag
-    else
-        touch /tmp/pom_lock_flag
-        counter=$((0))
-    fi
+    for task in "$lock_task_folder"*.sh; do
+      bash "$task" -H
+    done
 }
+
 unlock_task()
 {
-  duration=$SECONDS
-  if [ "$(($duration/60))" -gt "15" ]; then
-      echo "$(($duration/60))"
-      counter=$((0))
-  elif [[ $counter == 4 ]]; then
-      touch /tmp/extended_break_flag
-      counter=$((0))
-  fi
-  if [[ ! -e $pom_kill_flag ]]; then
-    /home/daedalus/github/pomodoro_lock/pomodoro_lock.py
-  fi
+  for task in "$unlock_task_folder"*.sh; do
+    bash "$task" -H
+  done
 }
 
 if [ -e "$pidfile" ]; then    # if lock file exists, exit
@@ -56,6 +50,11 @@ log daemon started...
 
 echo $$ > $pidfile            # create lock file with own PID inside
 
+for task in "$start_task_folder"*.sh; do
+  bash "$task" -H
+done
+
+
 # usually `dbus-daemon` address can be guessed (`-s` returns 1st PID found)
 export $(grep -z DBUS_SESSION_BUS_ADDRESS /proc/$(pidof -s dbus-daemon)/environ)
 
@@ -66,10 +65,12 @@ dbus-monitor --address $DBUS_SESSION_BUS_ADDRESS "$expr" | \
         case "$line" in
             *"boolean true"*)
                log session locked
+               SECONDS=0
                lock_task
                ;;
             *"boolean false"*)
                log session unlocked
+               echo "$SECONDS">"$seconds_file"
                unlock_task
                ;;
         esac

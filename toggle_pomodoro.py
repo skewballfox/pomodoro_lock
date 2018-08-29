@@ -70,9 +70,10 @@ if (len(sys.argv)>1):
     elif (sys.argv[1].lower() == "sleep"):
         toggle_off();
         try:
-            time.sleep(int(sys.arv[2])*60)
+            time.sleep(int(sys.argv[2])*60)
         except ValueError:
             sys.exit("SLEEP MUST BE FOLLOWED BY NUMBER");
+        toggle_on();
     else:
         print(sys.argv[1].lower())
         sys.exit("CURRENTLY UNSUPPORTED ARGUMENT")
