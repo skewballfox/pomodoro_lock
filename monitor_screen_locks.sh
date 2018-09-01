@@ -64,12 +64,14 @@ dbus-monitor --address $DBUS_SESSION_BUS_ADDRESS "$expr" | \
     while read line; do
         case "$line" in
             *"boolean true"*)
+               echo "session locked"
                log session locked
                SECONDS=0
                lock_task
                ;;
             *"boolean false"*)
                log session unlocked
+               echo "session unlocked"
                echo "$SECONDS">"$seconds_file"
                unlock_task
                ;;
