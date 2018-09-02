@@ -9,7 +9,7 @@ seconds_file="/tmp/seconds_file"
 
 pidfile=/tmp/lastaukth.pid     # lock file path
 logfile=/tmp/lastauth.log     # log file path
-pom_kill_flag=/tmp/pom_kill_flag
+
 
 
 cleanup()
@@ -58,7 +58,7 @@ done
 # usually `dbus-daemon` address can be guessed (`-s` returns 1st PID found)
 export $(grep -z DBUS_SESSION_BUS_ADDRESS /proc/$(pidof -s dbus-daemon)/environ)
 
-expr='type=signal,interface=org.freedesktop.ScreenSaver' # DBus watch expression here
+expr='type=signal, path=/org/freedesktop/ScreenSaver, interface=org.freedesktop.ScreenSaver' # DBus watch expression here
 
 dbus-monitor --address $DBUS_SESSION_BUS_ADDRESS "$expr" | \
     while read line; do
