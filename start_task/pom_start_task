@@ -1,0 +1,15 @@
+#!/bin/bash
+logfile=/tmp/lastauth.log     # log file path
+this_script=`basename -- "$0"`
+
+log()
+{                       # simple logging format example
+    echo $(date +%Y-%m-%d\ %X) -- $USER -- "$this_script" -- "$@" >> $logfile
+}
+
+counter=0
+log "creating counter for extended break"
+log counter is 0
+touch "/tmp/pom_counter"
+
+echo $counter > /tmp/pom_counter

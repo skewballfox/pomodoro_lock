@@ -67,8 +67,6 @@ such as running a gif or video. mostly aesthetic, but could add to the
 functionality as an actual pomodoro timer. an example would be ideas for things
 to do in the time until next unlock.
 
-4) implement some type of logging
-
 5) Seperate the monitor to it's own project, and just have this
 depend on that script. the reason being is that the monitor is going to be used
 for quite a few scripts that revolve around screen locks and unlocks.
@@ -83,6 +81,14 @@ import configparser
 import time
 import os
 import sys
+import datetime
+from getpass import getuser
+
+def log(log_contents, log_file="/tmp/lastauth.log"):
+    formatted_log = '{} -- {} -- {} -- {}\n'.format(time.strftime("%Y-%m-%d %H:%M:%S"),
+    getuser(), os.path.basename(sys.argv[0]), log_contents)
+    with open(log_file, 'a') as log:
+        log.write(formatted_log)
 
 
 def kill_running_pomodoro():
@@ -92,8 +98,10 @@ def kill_running_pomodoro():
 
     """
     if (os.path.exists("/tmp/pom_running_flag") is True):
+        log("older locker found")
         with open("/tmp/pom_running_flag") as file:
             pid = file.readline().rstrip()
+        log("attempting to kill {}".format(pid))
         subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
         subprocess.call(["kill", "-9", pid])
 
@@ -102,24 +110,27 @@ def pomodoro(extended_break=False):
     get = subprocess.check_output(["xrandr"]).decode("utf-8").split()
     screens = [get[i-1] for i in range(len(get)) if get[i] == "connected"]
     subprocess.call(["touch", "/tmp/pomodoro_complete_flag"])
+    log("break started")
     for scr in screens:
         # lock the screen, turn the display black, and potentially activate
         # a very intensive process to further incentivise my commitment...
         subprocess.call(["xdg-screensaver", "lock"])
         subprocess.call(["xrandr", "--output", scr, "--brightness", "0"])
-
+    log("screen locked and display blacked")
     if extended_break is False:
         time.sleep(sleeptime)
     else:
         # this will be 15 minute for 3 minute breaks
         time.sleep(sleeptime*5)
-
+    log("break ended")
     for scr in screens:
         # back to "normal"
         subprocess.call(["xrandr", "--output", scr, "--brightness", "1"])
-
+    log("screen brightened")
 
 if __name__ == "__main__":
+
+    log("starting")
     config = configparser.ConfigParser()
     config.sections()
     config.read('/home/daedalus/github/pomodoro_lock/config.ini')
@@ -133,7 +144,7 @@ if __name__ == "__main__":
 
     # check to make sure this is only instance of script
     # if not, kill earlier instance
-
+    log("checking for running flag")
     kill_running_pomodoro()
 
     # write pid to file, to be used in the above verification
@@ -142,34 +153,32 @@ if __name__ == "__main__":
     pid_file.write(("%d") % (os.getpid()))
     pid_file.close()
 
-    open("/tmp/verify_pom_running_flag", "w").close()
-
     if (os.path.exists("/tmp/extended_break_flag") is True):
+        log("extended_break_noted")
         extended_break = True
         subprocess.call(["rm", "-f", "/tmp/extended_break_flag"])
-    # previous_time = time.perf_counter()
-
+    previous_time = time.perf_counter()
+    log("pomodoro timer started")
     for i in range(6*awaketime):
         if (os.path.exists("/tmp/pom_lock_flag") is False):
-            file_name = "/tmp/run_at_%f" % (time.time())
-            open(file_name, "w").close()
-
             time.sleep(10)
-
-            """
             if time.perf_counter() - previous_time > 12:
+                log("time discrepancy noted")
+                log("exiting")
                 subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
                 subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
                 sys.exit()
             else:
                 previous_time = time.perf_counter()
-            """
-
         else:
+            log("premature screen lock noted")
             subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
             subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
+            log("exiting")
             sys.exit()
 
     pomodoro()
+    log("removing running flag")
     subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
+    log("exiting")
     sys.exit(0)

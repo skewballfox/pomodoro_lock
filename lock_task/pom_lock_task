@@ -1,0 +1,31 @@
+#!/bin/bash
+
+pomodoro_complete_flag=/tmp/pomodoro_complete_flag
+
+counter_file=/tmp/pom_counter
+counter=$(cat $counter_file)
+
+logfile=/tmp/lastauth.log     # log file path
+this_script=`basename -- "$0"`
+
+log()
+{                       # simple logging format example
+    echo $(date +%Y-%m-%d\ %X) -- $USER -- "$this_script" -- "$@" >> $logfile
+}
+
+if [ -e "$pomodoro_complete_flag" ]; then    # if lock file exists, exit
+    counter=$((counter+1))
+    log "pom was completed"
+    log "counter is now $counter"
+    echo $counter > $counter_file
+    log "removing pomodoro_complete_flag"
+    rm -f $pomodoro_complete_flag
+else
+    log "Pom was not completed"
+    log "creating premature lock flag"
+    touch /tmp/pom_lock_flag
+
+    counter=$((0))
+    log "reseting counter to 0"
+    echo $counter > $counter_file
+fi

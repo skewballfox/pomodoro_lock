@@ -10,7 +10,7 @@ seconds_file="/tmp/seconds_file"
 pidfile=/tmp/lastaukth.pid     # lock file path
 logfile=/tmp/lastauth.log     # log file path
 
-
+this_script=$(basename -- "$0")
 
 cleanup()
 {                   # when cleaning up:
@@ -21,21 +21,17 @@ cleanup()
 
 log()
 {                       # simple logging format example
-    echo $(date +%Y-%m-%d\ %X) -- $USER -- "$@" >> $logfile
+    echo $(date +%Y-%m-%d\ %X) -- $USER -- "$this_script" -- "$@" >> $logfile
 }
 
 lock_task()#things to be done when session is locked
 {
-    for task in "$lock_task_folder"*.sh; do
-      bash "$task" -H
-    done
+    run-parts $lock_task_folder
 }
 
 unlock_task()
 {
-  for task in "$unlock_task_folder"*.sh; do
-    bash "$task" -H
-  done
+  run-parts $unlock_task_folder
 }
 
 if [ -e "$pidfile" ]; then    # if lock file exists, exit
@@ -50,9 +46,7 @@ log daemon started...
 
 echo $$ > $pidfile            # create lock file with own PID inside
 
-for task in "$start_task_folder"*.sh; do
-  bash "$task" -H
-done
+run-parts "$start_task_folder"
 
 
 # usually `dbus-daemon` address can be guessed (`-s` returns 1st PID found)
@@ -64,15 +58,17 @@ dbus-monitor --address $DBUS_SESSION_BUS_ADDRESS "$expr" | \
     while read line; do
         case "$line" in
             *"boolean true"*)
-               echo "session locked"
                log session locked
                SECONDS=0
+               log Starting lock tasks
                lock_task
                ;;
             *"boolean false"*)
-               log session unlocked
-               echo "session unlocked"
+               log Session unlocked
+               duration=$(bc -l <<<"scale=2; $SECONDS/60")
+               log "Time since last unlock is $duration minutes"
                echo "$SECONDS">"$seconds_file"
+               log starting unlock tasks
                unlock_task
                ;;
         esac
