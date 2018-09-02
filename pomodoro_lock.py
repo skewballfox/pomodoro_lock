@@ -142,19 +142,29 @@ if __name__ == "__main__":
     pid_file.write(("%d") % (os.getpid()))
     pid_file.close()
 
+    open("/tmp/verify_pom_running_flag", "w").close()
+
     if (os.path.exists("/tmp/extended_break_flag") is True):
         extended_break = True
         subprocess.call(["rm", "-f", "/tmp/extended_break_flag"])
-    previous_time = time.perf_counter()
+    # previous_time = time.perf_counter()
+
     for i in range(6*awaketime):
         if (os.path.exists("/tmp/pom_lock_flag") is False):
+            file_name = "/tmp/run_at_%f" % (time.time())
+            open(file_name, "w").close()
+
             time.sleep(10)
+
+            """
             if time.perf_counter() - previous_time > 12:
                 subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
                 subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
                 sys.exit()
             else:
                 previous_time = time.perf_counter()
+            """
+
         else:
             subprocess.call(["rm", "-f", "/tmp/pom_lock_flag"])
             subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])

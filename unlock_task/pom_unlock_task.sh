@@ -7,6 +7,7 @@ duration=$(cat "/tmp/seconds_file")
 counter_file=/tmp/pom_counter
 counter=$(< $counter_file)
 
+touch /tmp/verify_unlock_running_flag
 
 if [ "$(($duration/60))" -gt "15" ]; then
     echo "period since last screen lock longer than 15 minutes"
