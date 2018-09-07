@@ -47,12 +47,18 @@ I changed a few of the lines to use in the python script to use less bash
 and more python builtins
 
 September 2018
+1st
 I modified the monitor program to launch all scripts in a directory, I'm
 going to move that to a seperate repository soon.
 
 I fixed the issue with the counter not triggering the extended break
 
 I implemented a rather hackish solution to detecting sleep.
+
+7th
+moved control of the extended break into the lock script itself, should simplify
+things a bit, only needs to be set outside the script in cases of early lock
+
 
 TODO:
 priority highest to lowest
@@ -90,6 +96,20 @@ def log(log_contents, log_file="/tmp/lastauth.log"):
     with open(log_file, 'a') as log:
         log.write(formatted_log)
 
+def get_counter(counter_file='/tmp/pom_counter'):
+    with open(counter_file, 'r') as file:
+        try:
+            log('reading counter from file')
+            int counter=file.readline().rstrip()
+        except(ValueError):
+            log('counter file fail')
+        return counter
+
+def set_counter(counter,counter_file='/tmp/pom_counter'):
+    log("setting counter to {}".format(counter))
+    with open(counter_file, 'w') as file:
+        file.write(counter)
+
 
 def kill_running_pomodoro():
     """
@@ -106,22 +126,28 @@ def kill_running_pomodoro():
         subprocess.call(["kill", "-9", pid])
 
 
-def pomodoro(extended_break=False):
+def pomodoro():
     get = subprocess.check_output(["xrandr"]).decode("utf-8").split()
     screens = [get[i-1] for i in range(len(get)) if get[i] == "connected"]
     subprocess.call(["touch", "/tmp/pomodoro_complete_flag"])
-    log("break started")
+    counter=get_counter()
+
+    log("starting process for locking and sleeping")
     for scr in screens:
         # lock the screen, turn the display black, and potentially activate
         # a very intensive process to further incentivise my commitment...
         subprocess.call(["xdg-screensaver", "lock"])
         subprocess.call(["xrandr", "--output", scr, "--brightness", "0"])
     log("screen locked and display blacked")
-    if extended_break is False:
-        time.sleep(sleeptime)
-    else:
+    if counter >= 4:
+        log ("extended break started")
         # this will be 15 minute for 3 minute breaks
         time.sleep(sleeptime*5)
+        set_counter(0)
+    else:
+        log("break started")
+        time.sleep(sleeptime)
+        set_counter(counter+1)
     log("break ended")
     for scr in screens:
         # back to "normal"
@@ -139,7 +165,6 @@ if __name__ == "__main__":
     awaketime = int(float(config.get("pomodoro_lock", "awaketime")))
     sleeptime = int(float(config.get("pomodoro_lock", "sleeptime"))*60)
 
-    extended_break = False
     # used to tell when to make the pause longer than normal
 
     # check to make sure this is only instance of script
@@ -153,10 +178,7 @@ if __name__ == "__main__":
     pid_file.write(("%d") % (os.getpid()))
     pid_file.close()
 
-    if (os.path.exists("/tmp/extended_break_flag") is True):
-        log("extended_break_noted")
-        extended_break = True
-        subprocess.call(["rm", "-f", "/tmp/extended_break_flag"])
+
     previous_time = time.perf_counter()
     log("pomodoro timer started")
     for i in range(6*awaketime):
@@ -177,7 +199,7 @@ if __name__ == "__main__":
             log("exiting")
             sys.exit()
 
-    pomodoro()
+    pomodoro(extended_break)
     log("removing running flag")
     subprocess.call(["rm", "-f", "/tmp/pom_running_flag"])
     log("exiting")
